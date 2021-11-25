@@ -1,4 +1,5 @@
 
+
 public class Pinky extends Ghost{
 
 	public Pinky(int x, int y) {
@@ -10,4 +11,5 @@ public class Pinky extends Ghost{
 		if (state.equals(Ghost.GhostState.Scatter))
 			target = new Position(0, 0);
 	}
+	
 }

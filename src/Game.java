@@ -26,7 +26,7 @@ public class Game extends JPanel{
 		}
 	
 	private int highScore;
-	private int score;
+	private int score = 0;
 	private int remainedDots;
 	
 	private List<Tile> tiles;
@@ -78,7 +78,23 @@ public class Game extends JPanel{
 	private Pinky pinky;
 	private Clyde clyde;
 	
+	private int level = 1;
+	private Ghost.GhostState currentState;
+	private int currentTime;
+	private int currentStateNumber;
+	private int scatterTime[][] = {
+			{7000,7000,5000,5000},
+			{7000,7000,5000,1000},
+			{5000,5000,5000,1000}
+	};
+	private int chaseTime[][] = {
+			{20000,20000,20000},
+			{20000,20000,353000},
+			{20000,20000,357000}
+	};
+	
 	private Timer timer;
+	private boolean timerEnabled;
 	
 	Game(Controls controls_input){
 		this.setPreferredSize(new Dimension(560,720));
@@ -86,6 +102,9 @@ public class Game extends JPanel{
 		controls = controls_input;
 		tiles = new ArrayList<Tile>();
 		buildMaze();
+		timerEnabled = false;
+		simpleTimer();
+		timer.start();
 	}
 	
 	public void buildMaze() {
@@ -136,13 +155,20 @@ public class Game extends JPanel{
 	}
 	
 	public void initLevel() {
+		remainedDots = 244;
+		currentTime = 0;
+		currentStateNumber = 0;
+		currentState = Ghost.GhostState.Scatter;
 		pacMan = new PacMan(280,640);
 		blinky = new Blinky(240, 160);
 		pinky = new Pinky(320, 160);
 		inky = new Inky(280, 160);
 		clyde = new Clyde(360, 160);
-		simpleTimer();
-		timer.start();
+		blinky.setState(Ghost.GhostState.Scatter);
+		pinky.setState(Ghost.GhostState.Scatter);
+		inky.setState(Ghost.GhostState.Scatter);
+		clyde.setState(Ghost.GhostState.Scatter);
+		timerEnabled = true;
 	}
 	
 	public void simpleTimer() {
@@ -154,7 +180,78 @@ public class Game extends JPanel{
 		});
 	}
 	
+	public void levelCompleted() {
+		level += 1;
+		initLevel();
+	}
+	
+	public void addDotScore(int i) {
+		score += i;
+		remainedDots -= 1;
+		if (remainedDots == 0)
+		{
+			levelCompleted();
+		}
+	}
+	
+	public void enterFrightened() {
+		blinky.setState(Ghost.GhostState.Frightened);
+		pinky.setState(Ghost.GhostState.Frightened);
+		inky.setState(Ghost.GhostState.Frightened);
+		clyde.setState(Ghost.GhostState.Frightened);
+	}
+	
+	public void pacmanTick() {
+		
+	}
+	
+	public void ghostTick() {
+		
+	}
+	
 	public void tick() {
+		if (timerEnabled) {
+		currentTime += 15;
+		
+		if(pacMan.getPosition().measureDistance(blinky.getPosition()) < 20)
+		{
+			timerEnabled = false;
+		}
+		if(pacMan.getPosition().measureDistance(inky.getPosition()) < 20)
+		{
+			timerEnabled = false;
+		}
+		if(pacMan.getPosition().measureDistance(clyde.getPosition()) < 20)
+		{
+			timerEnabled = false;
+		}
+		if(pacMan.getPosition().measureDistance(pinky.getPosition()) < 20)
+		{
+			timerEnabled = false;
+		}
+		
+		if(!(currentState.equals(Ghost.GhostState.Chase) && currentStateNumber == 3))
+		{
+			if (currentState.equals(Ghost.GhostState.Scatter) && currentTime > scatterTime[level][currentStateNumber])
+			{
+				currentState = Ghost.GhostState.Chase;
+				currentTime = 0;
+				blinky.setState(Ghost.GhostState.Chase);
+				pinky.setState(Ghost.GhostState.Chase);
+				inky.setState(Ghost.GhostState.Chase);
+				clyde.setState(Ghost.GhostState.Chase);
+			}
+			else if (currentState.equals(Ghost.GhostState.Chase) && currentTime > chaseTime[level][currentStateNumber])
+			{
+				currentState = Ghost.GhostState.Scatter;
+				currentTime = 0;
+				currentStateNumber += 1;
+				blinky.setState(Ghost.GhostState.Scatter);
+				pinky.setState(Ghost.GhostState.Scatter);
+				inky.setState(Ghost.GhostState.Scatter);
+				clyde.setState(Ghost.GhostState.Scatter);
+			}
+		}
 		
 		blinky.detTarget(pacMan);
 		pinky.detTarget(pacMan);
@@ -171,14 +268,13 @@ public class Game extends JPanel{
 				if (i.isHasDot())
 				{
 					i.setHasDot(false);
-					score += 10;
-					remainedDots -= 1;
+					addDotScore(10);
 				}
 				if (i.isHasBigDot())
 				{
 					i.setHasBigDot(false);
-					score += 50;
-					remainedDots -= 1;
+					addDotScore(50);
+					enterFrightened();
 				}
 				if(i.getTeleportLink() != null)
 				{
@@ -188,6 +284,7 @@ public class Game extends JPanel{
 			}
 			if (blinky.getPosition().equals(i.getPosition()))
 			{
+				blinky.setLastTile(i);
 				if(i.getTeleportLink() != null)
 				{
 					blinky.setPosition(i.getTeleportLink().getPosition());
@@ -197,6 +294,7 @@ public class Game extends JPanel{
 			}
 			if (pinky.getPosition().equals(i.getPosition()))
 			{
+				pinky.setLastTile(i);
 				if(i.getTeleportLink() != null)
 				{
 					pinky.setPosition(i.getTeleportLink().getPosition());
@@ -206,6 +304,7 @@ public class Game extends JPanel{
 			}
 			if (inky.getPosition().equals(i.getPosition()))
 			{
+				inky.setLastTile(i);
 				if(i.getTeleportLink() != null)
 				{
 					inky.setPosition(i.getTeleportLink().getPosition());
@@ -215,6 +314,7 @@ public class Game extends JPanel{
 			}
 			if (clyde.getPosition().equals(i.getPosition()))
 			{
+				clyde.setLastTile(i);
 				if(i.getTeleportLink() != null)
 				{
 					clyde.setPosition(i.getTeleportLink().getPosition());
@@ -224,13 +324,14 @@ public class Game extends JPanel{
 			}
         }
 		if (!pacmanInTile)
-			pacMan.move();
-		blinky.move();
-		pinky.move();
-		inky.move();
-		clyde.move();
+			pacMan.move(2);
+		blinky.move(2);
+		pinky.move(2);
+		inky.move(2);
+		clyde.move(2);
 		pacMan.setDirection(controls.getDirectionQueue());
 		repaint();
+		}
 	}
 
 	
@@ -277,6 +378,8 @@ public class Game extends JPanel{
         Image p_down = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_down.gif").getImage();
         Image p_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_left.gif").getImage();
         Image p_right = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_right.gif").getImage();
+        Image frightened = new ImageIcon("C:\\Users\\Dell\\Downloads\\f.gif").getImage();
+        Image frightenedend = new ImageIcon("C:\\Users\\Dell\\Downloads\\fe.gif").getImage();
         if(pacMan.getDirection().equals(Game.Direction.Down))
         	g2d.drawImage(pacManTexture_down, pacMan.getPosition().getX(), pacMan.getPosition().getY(), null);
         if(pacMan.getDirection().equals(Game.Direction.Up))
@@ -286,45 +389,64 @@ public class Game extends JPanel{
         if(pacMan.getDirection().equals(Game.Direction.Right))
         	g2d.drawImage(pacManTexture_right, pacMan.getPosition().getX(), pacMan.getPosition().getY(), null);
 
-        g2d.drawImage(ghost_texture, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
-        g2d.drawImage(ghost_texture, inky.getPosition().getX(), inky.getPosition().getY(), null);
-        g2d.drawImage(ghost_texture, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
-        if(blinky.getDirection().equals(Game.Direction.Down))
-        	g2d.drawImage(b_down, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
-        if(blinky.getDirection().equals(Game.Direction.Up))
-        	g2d.drawImage(b_up, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
-        if(blinky.getDirection().equals(Game.Direction.Left))
-        	g2d.drawImage(b_left, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
-        if(blinky.getDirection().equals(Game.Direction.Right))
-        	g2d.drawImage(b_right, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
         
-        if(clyde.getDirection().equals(Game.Direction.Down))
-        	g2d.drawImage(c_down, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
-        if(clyde.getDirection().equals(Game.Direction.Up))
-        	g2d.drawImage(c_up, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
-        if(clyde.getDirection().equals(Game.Direction.Left))
-        	g2d.drawImage(c_left, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
-        if(clyde.getDirection().equals(Game.Direction.Right))
-        	g2d.drawImage(c_right, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        if(blinky.getState().equals(Ghost.GhostState.Frightened))
+        	g2d.drawImage(frightened, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        else 
+        {
+        	if(blinky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(b_down, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(b_up, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(b_left, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(b_right, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        }
         
-        if(inky.getDirection().equals(Game.Direction.Down))
-        	g2d.drawImage(i_down, inky.getPosition().getX(), inky.getPosition().getY(), null);
-        if(inky.getDirection().equals(Game.Direction.Up))
-        	g2d.drawImage(i_up, inky.getPosition().getX(), inky.getPosition().getY(), null);
-        if(inky.getDirection().equals(Game.Direction.Left))
-        	g2d.drawImage(i_left, inky.getPosition().getX(), inky.getPosition().getY(), null);
-        if(inky.getDirection().equals(Game.Direction.Right))
-        	g2d.drawImage(i_right, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        if(clyde.getState().equals(Ghost.GhostState.Frightened))
+        	g2d.drawImage(frightened, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        else
+        {
+        	if(clyde.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(c_down, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(c_up, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(c_left, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(c_right, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        }
         
-        if(pinky.getDirection().equals(Game.Direction.Down))
-        	g2d.drawImage(p_down, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
-        if(pinky.getDirection().equals(Game.Direction.Up))
-        	g2d.drawImage(p_up, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
-        if(pinky.getDirection().equals(Game.Direction.Left))
-        	g2d.drawImage(p_left, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
-        if(pinky.getDirection().equals(Game.Direction.Right))
-        	g2d.drawImage(p_right, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        if(inky.getState().equals(Ghost.GhostState.Frightened))
+        	g2d.drawImage(frightened, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        else
+        {
+        	if(inky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(i_down, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(i_up, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(i_left, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(i_right, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        }
         
+        if(pinky.getState().equals(Ghost.GhostState.Frightened))
+        	g2d.drawImage(frightened, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        else
+        {
+        	if(pinky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(p_down, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(p_up, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(p_left, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(p_right, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        }
+
+        /*
         g2d.setPaint(Color.red);
 		g2d.fillOval(blinky.getTarget().getX()+10, blinky.getTarget().getY()+10, 7, 7);
 		g2d.setPaint(Color.pink);
@@ -333,7 +455,7 @@ public class Game extends JPanel{
 		g2d.fillOval(inky.getTarget().getX()+10, inky.getTarget().getY()+10, 7, 7);
 		g2d.setPaint(Color.orange);
 		g2d.fillOval(clyde.getTarget().getX()+10, clyde.getTarget().getY()+10, 7, 7);
-        
+        */
         g2d.dispose();
     }
 	

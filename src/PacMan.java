@@ -14,7 +14,7 @@ public class PacMan extends Entity{
 	
 	public void movePacMan(Tile t) {
 		if (t.getNext(direction) != null)
-			move();
+			move(2);
 	}
 	
 	public void turn(Tile t) {
