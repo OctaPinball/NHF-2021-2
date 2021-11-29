@@ -1,16 +1,20 @@
 import java.util.Random;
 
-public class Ghost extends Entity{
+public class Ghost extends Entity implements Constant{
 	enum GhostState {
 		  Scatter,
 		  Chase,
 		  Frightened,
-		  Eaten
+		  Eaten,
+		  InGhostHouse,
+		  ExitGhostHouse
 		}
 	protected GhostState state;
 	protected GhostState stateMemory;
 	protected Position target;
 	protected int frightenedTimeLeft;
+	protected int pelletToExit;
+	protected Position housePosition;
 	
 	public Ghost(int x, int y) {
 		position = new Position(x,y);
@@ -37,17 +41,39 @@ public class Ghost extends Entity{
 	public GhostState getState() {
 		return state;
 	}
+	
+	public void dropState() {
+		state = stateMemory;
+	}
+	
 	public void setState(GhostState s) {
+		if (s.equals(GhostState.ExitGhostHouse) && (state.equals(GhostState.InGhostHouse) || state.equals(GhostState.Eaten)))
+		{
+				state = s;
+				return;
+		}
+		if (state.equals(GhostState.ExitGhostHouse) || state.equals(GhostState.InGhostHouse))
+		{
+			if (s.equals(GhostState.Chase) || s.equals(GhostState.Scatter) || s.equals(GhostState.Frightened))
+			{
+					stateMemory = s;
+					return;
+			}
+		}
 		if (s.equals(GhostState.Frightened))
 		{
 			if(!state.equals(GhostState.Frightened))
 			{
 				turnAround();
 			}
-			frightenedTimeLeft = 1000;
+			frightenedTimeLeft = FRIGHTENED_TIME;
 			stateMemory = state;
 			state = s;
 			return;
+		}
+		if (state.equals(GhostState.Frightened) && s.equals(GhostState.Eaten))
+		{
+			state = s;
 		}
 		if (state.equals(GhostState.Frightened) && !s.equals(GhostState.Frightened))
 		{
@@ -58,6 +84,12 @@ public class Ghost extends Entity{
 		turnAround();
 	}
 	public void choseDirection(Tile f) {
+		if(f.isGhostBounce())
+		{
+			turnAround();
+			System.out.println("ez");
+			return;
+		}
 		if(state.equals(GhostState.Frightened))
 		{
 			boolean pathFound = false;
@@ -74,7 +106,7 @@ public class Ghost extends Entity{
 						break;
 					}
 				case 1:
-					if(f.getNext(Game.Direction.Down) != null && !direction.equals(Game.Direction.Up))
+					if(f.getNext(Game.Direction.Down) != null && !direction.equals(Game.Direction.Up) && !f.isEnterance())
 					{
 						direction = Game.Direction.Down;
 						pathFound = true;
@@ -108,7 +140,7 @@ public class Ghost extends Entity{
 					nextDirection = Game.Direction.Right;
 				}
 			}
-			if (f.getNext(Game.Direction.Down) != null && !direction.equals(Game.Direction.Up))
+			if (f.getNext(Game.Direction.Down) != null && !direction.equals(Game.Direction.Up) && (!f.isEnterance() || this.state.equals(GhostState.Eaten)))
 			{
 				down = f.getNext(Game.Direction.Down).getPosition().measureDistance(target);
 				if (down < min || min == -1)
@@ -138,6 +170,26 @@ public class Ghost extends Entity{
 			direction = nextDirection;
 		}
 			
+	}
+
+
+	public int getPelletToExit() {
+		return pelletToExit;
+	}
+
+
+	public void setPelletToExit(int pelletToExit) {
+		this.pelletToExit = pelletToExit;
+	}
+
+
+	public Position getHousePosition() {
+		return housePosition;
+	}
+
+
+	public void setHousePosition(Position housePosition) {
+		this.housePosition = housePosition;
 	}
 	
 	

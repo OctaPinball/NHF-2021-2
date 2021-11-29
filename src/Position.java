@@ -24,10 +24,12 @@ public class Position {
 	public double measureDistance(Position p) {
 		return (Math.sqrt(Math.pow(x-p.getX(), 2) + Math.pow(y-p.getY(), 2)));
 	}
+	public void setPosition(Position p) {
+		x = p.getX();
+		y = p.getY();
+	}
 	public boolean equals(Position p) {
-		if (x == p.getX() && y == p.getY())
-			return true;
-		return false;
+		return (x == p.getX() && y == p.getY());
 	}
 	public boolean equals(Position p, int x_offset, int y_offset) {
 		if (x + x_offset == p.getX() && y + y_offset == p.getY())

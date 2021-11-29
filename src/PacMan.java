@@ -1,5 +1,5 @@
 
-public class PacMan extends Entity{
+public class PacMan extends Entity implements Constant{
 	
 	private Game.Direction nextDirection = Game.Direction.Left;
 	
@@ -14,14 +14,15 @@ public class PacMan extends Entity{
 	
 	public void movePacMan(Tile t) {
 		if (t.getNext(direction) != null)
-			move(2);
+			move(MOVE_STEPS);
 	}
 	
 	public void turn(Tile t) {
 		if(!t.isCantTurn())
 		{
-			if (t.getNext(nextDirection) != null)
-				direction = nextDirection;
+			if(!(t.isEnterance() && nextDirection.equals(Game.Direction.Down)))
+				if (t.getNext(nextDirection) != null)
+					direction = nextDirection;
 		}
 	}
 }

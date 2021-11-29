@@ -11,6 +11,9 @@ public class Tile {
 	private boolean hasBigDot;
 	private boolean cantGoUp;
 	private boolean cantTurn;
+	private boolean ghostBounce;
+	private boolean enterance;
+	private boolean pinkyBounce;
 	Tile teleportLink;
 
 	private Image dotImage;
@@ -23,6 +26,10 @@ public class Tile {
 		setCantGoUp(false);
 		setHasBigDot(false);
 		setCantTurn(false);
+		setEnterance(false);
+		setGhostBounce(false);
+		setPinkyBounce(false);
+		
 		teleportLink = null;
 		if(constructionCode == 1 || constructionCode == 4)
 			setHasDot(true);
@@ -32,7 +39,20 @@ public class Tile {
 			setHasBigDot(true);
 		if(constructionCode == 6)
 			setCantTurn(true);
+		if(constructionCode == 7)
+			setEnterance(true);
+		if(constructionCode == 8)
+			setGhostBounce(true);
+		if(constructionCode == 9)
+			setPinkyBounce(true);
 		next = new HashMap<Game.Direction, Tile>();
+	}
+	
+	public void setDot(int i) {
+		if(i == 1 || i == 4)
+			setHasDot(true);
+		if(i == 3)
+			setHasBigDot(true);
 	}
 	
 	public Tile getNext(Game.Direction d) {
@@ -43,6 +63,8 @@ public class Tile {
 	
 	
 	public void setNext(Game.Direction d, Tile t) {
+		if (next.containsKey(d))
+			next.remove(d);
 		next.put(d, t);
 	}
 	
@@ -73,6 +95,19 @@ public class Tile {
 		if (next.containsKey(Game.Direction.Right))
 			right = true;
 		return ((up && left) || (down && right) || (up && right) || (down && left));
+	}
+	
+	public int countN() {
+		int i = 0;
+		if (next.containsKey(Game.Direction.Up))
+			i++;
+		if (next.containsKey(Game.Direction.Down))
+			i++;
+		if (next.containsKey(Game.Direction.Left))
+			i++;
+		if (next.containsKey(Game.Direction.Right))
+			i++;
+		return i;
 	}
 	
 	
@@ -110,5 +145,29 @@ public class Tile {
 	}
 	void setTeleportTile(Tile t) {
 		teleportLink = t;
+	}
+
+	public boolean isGhostBounce() {
+		return ghostBounce;
+	}
+
+	public void setGhostBounce(boolean ghostBounce) {
+		this.ghostBounce = ghostBounce;
+	}
+
+	public boolean isEnterance() {
+		return enterance;
+	}
+
+	public void setEnterance(boolean enterance) {
+		this.enterance = enterance;
+	}
+
+	public boolean isPinkyBounce() {
+		return pinkyBounce;
+	}
+
+	public void setPinkyBounce(boolean pinkyBounce) {
+		this.pinkyBounce = pinkyBounce;
 	}
 }

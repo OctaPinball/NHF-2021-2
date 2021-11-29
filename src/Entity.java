@@ -36,15 +36,28 @@ public class Entity {
 		return direction;
 	}
 	
+	
 	public void turnAround() {
 		if (direction.equals(Game.Direction.Up) && lastTile != null && lastTile.getNext(Game.Direction.Down) != null)
+		{
 			direction = Game.Direction.Down;
+			return;
+		}
 		if (direction.equals(Game.Direction.Down) && lastTile != null && lastTile.getNext(Game.Direction.Up) != null)
+		{
 			direction = Game.Direction.Up;
+			return;
+		}
 		if (direction.equals(Game.Direction.Left) && lastTile != null && lastTile.getNext(Game.Direction.Right) != null)
+		{
 			direction = Game.Direction.Right;
+			return;
+		}
 		if (direction.equals(Game.Direction.Right) && lastTile != null && lastTile.getNext(Game.Direction.Left) != null)
+		{
 			direction = Game.Direction.Left;
+			return;
+		}
 	}
 	
 	public void move(int i) {

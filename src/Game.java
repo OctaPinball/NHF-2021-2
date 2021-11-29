@@ -1,10 +1,13 @@
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+
 import javax.swing.Timer;
 
 import javax.swing.ImageIcon;
@@ -16,7 +19,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import java.awt.Color;
 
-public class Game extends JPanel{
+public class Game extends JPanel implements Constant{
 	
 	enum Direction {
 		  Up,
@@ -30,45 +33,7 @@ public class Game extends JPanel{
 	private int remainedDots;
 	
 	private List<Tile> tiles;
-	private int tileHelper[][] = 
-			{
-		{1,1,1,1,1,1,1,1,1,1,1,1,0},
-		{1,0,0,0,0,1,0,0,0,0,0,1,0},
-		{3,0,0,0,0,1,0,0,0,0,0,1,0},
-		{1,0,0,0,0,1,0,0,0,0,0,1,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1},
-		{1,0,0,0,0,1,0,0,1,0,0,0,0},
-		{1,0,0,0,0,1,0,0,1,0,0,0,0},
-		{1,1,1,1,1,1,0,0,1,1,1,1,0},
-		{0,0,0,0,0,1,0,0,0,0,0,2,0},
-		{0,0,0,0,0,1,0,0,0,0,0,2,0},
-		{0,0,0,0,0,1,0,0,2,2,2,5,2},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{6,6,6,6,6,1,2,2,2,0,0,0,0},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{0,0,0,0,0,1,0,0,2,2,2,2,2},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{0,0,0,0,0,1,0,0,2,0,0,0,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,0},
-		{1,0,0,0,0,1,0,0,0,0,0,1,0},
-		{1,0,0,0,0,1,0,0,0,0,0,1,0},
-		{3,1,1,0,0,1,1,1,1,1,1,4,2},
-		{0,0,1,0,0,1,0,0,1,0,0,0,0},
-		{0,0,1,0,0,1,0,0,1,0,0,0,0},
-		{1,1,1,1,1,1,0,0,1,1,1,1,0},
-		{1,0,0,0,0,0,0,0,0,0,0,1,0},
-		{1,0,0,0,0,0,0,0,0,0,0,1,0},
-		{1,1,1,1,1,1,1,1,1,1,1,1,1},
-	};
-	//0 = no tile
-	//1 = tile with dot
-	//2 = tile without dot
-	//3 = tile with big dot
-	//4 = tile with dot without upway
-	//5 = tile without dot without upway
-	//6 = cant turn
+
 	
 	private Controls controls = new Controls();
 	
@@ -79,27 +44,32 @@ public class Game extends JPanel{
 	private Clyde clyde;
 	
 	private int level = 1;
+	private int life;
 	private Ghost.GhostState currentState;
 	private int currentTime;
 	private int currentStateNumber;
-	private int scatterTime[][] = {
-			{7000,7000,5000,5000},
-			{7000,7000,5000,1000},
-			{5000,5000,5000,1000}
-	};
-	private int chaseTime[][] = {
-			{20000,20000,20000},
-			{20000,20000,353000},
-			{20000,20000,357000}
-	};
+	private int ghostEaten;
+
 	
 	private Timer timer;
 	private boolean timerEnabled;
+	private boolean timerFrozen;
+	private Position ghostDeathPosition = new Position(0,0);
+	private boolean ghostDied = false;
+	private int frozenFor = 0;
+	private int ghostTime = 1;
+	private int currentGhostTime = 0;
+	private int pacmanTime = 1;
+	private int currentPacmanTime = 0;
 	
-	Game(Controls controls_input){
-		this.setPreferredSize(new Dimension(560,720));
+	private MainFrame f;
+	
+	Game(Controls controls_input, MainFrame frame) {
+		f = frame;
+		this.setPreferredSize(new Dimension(PANEL_WIDH,PANEL_HEIGH));
 		this.addKeyListener(controls);
 		controls = controls_input;
+		life = START_LIFE;
 		tiles = new ArrayList<Tile>();
 		buildMaze();
 		timerEnabled = false;
@@ -108,20 +78,21 @@ public class Game extends JPanel{
 	}
 	
 	public void buildMaze() {
+		tiles = new ArrayList<Tile>();
 		for (int j = 0; j < 29; j++)
 		{
 			for(int i = 0; i < 13; i++)
 			{
-				if (tileHelper[j][i] >= 1) {
-					Tile newTile = new Tile(i*20+20,j*20+80,tileHelper[j][i]);
+				if (TILE_HELPER[j][i] >= 1) {
+					Tile newTile = new Tile(i*20+20,j*20+80,TILE_HELPER[j][i]);
 					tiles.add(newTile);					
 				}
 
 			}
 			for(int i = 13; i < 26; i++)
 			{
-				if (tileHelper[j][25 - i] >= 1) {
-					Tile newTile = new Tile(i*20+20,j*20+80,tileHelper[j][25 - i]);
+				if (TILE_HELPER[j][25 - i] >= 1) {
+					Tile newTile = new Tile(i*20+20,j*20+80,TILE_HELPER[j][25 - i]);
 					tiles.add(newTile);					
 				}
 
@@ -138,6 +109,72 @@ public class Game extends JPanel{
 		tiles.add(t3);
 		tiles.add(t4);
 		
+		List<Tile> ghostHouse = new ArrayList<Tile>();
+		
+		Tile g1 = new Tile(230,340,2);
+		Tile g2 = new Tile(250,340,2);
+		Tile g3 = new Tile(270,340,2);
+		Tile g4 = new Tile(290,340,2);
+		Tile g5 = new Tile(310,340,2);
+		
+		Tile g6 = new Tile(230,330,8);
+		Tile g7 = new Tile(230,350,8);
+		Tile g8 = new Tile(270,330,9);
+		Tile g9 = new Tile(270,350,8);
+		Tile g10 = new Tile(310,330,8);
+		Tile g11 = new Tile(310,350,8);
+		
+		Tile g12 = new Tile(270,320,2);
+		Tile g13 = new Tile(270,300,2);
+		Tile g14 = new Tile(270,280,7);
+		
+		ghostHouse.add(g1);
+		ghostHouse.add(g2);
+		ghostHouse.add(g3);
+		ghostHouse.add(g4);
+		ghostHouse.add(g5);
+		ghostHouse.add(g6);
+		ghostHouse.add(g7);
+		ghostHouse.add(g8);
+		ghostHouse.add(g9);
+		ghostHouse.add(g10);
+		ghostHouse.add(g11);
+
+
+		for (Tile i : ghostHouse)
+		{
+			for (Tile j : ghostHouse)
+			{
+				if(i.getPosition().equals(j.getPosition(), 0, -10))
+					i.setNext(Game.Direction.Up, j);
+				if(i.getPosition().equals(j.getPosition(), 0, 10))
+					i.setNext(Game.Direction.Down, j);
+				if(i.getPosition().equals(j.getPosition(), -20, 0))
+					i.setNext(Game.Direction.Left, j);
+				if(i.getPosition().equals(j.getPosition(), 20, 0))
+					i.setNext(Game.Direction.Right, j);
+			}
+		}
+		
+		List<Tile> ghostHouse2 = new ArrayList<Tile>();
+		ghostHouse2.add(g12);
+		ghostHouse2.add(g13);
+		ghostHouse2.add(g14);
+		for (Tile i : ghostHouse2)
+		{
+			for (Tile j : ghostHouse2)
+			{
+				if(i.getPosition().equals(j.getPosition(), 0, -20))
+					i.setNext(Game.Direction.Up, j);
+				if(i.getPosition().equals(j.getPosition(), 0, 20))
+					i.setNext(Game.Direction.Down, j);
+			}
+		}
+		g12.setNext(Game.Direction.Down, g8);
+		g8.setNext(Game.Direction.Up, g12);
+		
+		
+		
 		for (Tile i : tiles)
         {
 			for (Tile j : tiles)
@@ -151,19 +188,38 @@ public class Game extends JPanel{
 				if(i.getPosition().equals(j.getPosition(), 20, 0))
 					i.setNext(Game.Direction.Right, j);
 	        }
+			if(g14.getPosition().equals(i.getPosition(), -10, 0))
+			{
+				g14.setNext(Game.Direction.Left, i);
+				i.setNext(Game.Direction.Right, g14);
+			}
+			if(g14.getPosition().equals(i.getPosition(), 10, 0))
+			{
+				g14.setNext(Game.Direction.Right, i);
+				i.setNext(Game.Direction.Left, g14);
+			}
+			
         }
+		tiles.addAll(ghostHouse);
+		tiles.addAll(ghostHouse2);
+		System.out.println(g14.countN());
 	}
 	
 	public void initLevel() {
+		
+		
+		buildMaze();
+		
 		remainedDots = 244;
 		currentTime = 0;
 		currentStateNumber = 0;
+		ghostEaten = 0;
 		currentState = Ghost.GhostState.Scatter;
 		pacMan = new PacMan(280,640);
-		blinky = new Blinky(240, 160);
-		pinky = new Pinky(320, 160);
-		inky = new Inky(280, 160);
-		clyde = new Clyde(360, 160);
+		blinky = new Blinky();
+		pinky = new Pinky();
+		inky = new Inky();
+		clyde = new Clyde();
 		blinky.setState(Ghost.GhostState.Scatter);
 		pinky.setState(Ghost.GhostState.Scatter);
 		inky.setState(Ghost.GhostState.Scatter);
@@ -172,12 +228,16 @@ public class Game extends JPanel{
 	}
 	
 	public void simpleTimer() {
-		timer = new Timer(15, new ActionListener() {
+		timer = new Timer(TIMER_MS, new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				tick();
 			}
 		});
+	}
+	
+	public void stopTimer() {
+		timer.stop();
 	}
 	
 	public void levelCompleted() {
@@ -201,63 +261,25 @@ public class Game extends JPanel{
 		clyde.setState(Ghost.GhostState.Frightened);
 	}
 	
+	public void dotEaten() {
+		addDotScore(10);
+		if (!pinky.getState().equals(Ghost.GhostState.ExitGhostHouse) && !pinky.getState().equals(Ghost.GhostState.InGhostHouse))
+		{
+			inky.setPelletToExit(inky.getPelletToExit() - 1);
+			if(inky.getPelletToExit() == 0)
+				inky.setState(Ghost.GhostState.ExitGhostHouse);
+		}
+		if (!inky.getState().equals(Ghost.GhostState.ExitGhostHouse) && !inky.getState().equals(Ghost.GhostState.InGhostHouse))
+		{
+			clyde.setPelletToExit(clyde.getPelletToExit() - 1);
+			if(clyde.getPelletToExit() == 0)
+				clyde.setState(Ghost.GhostState.ExitGhostHouse);
+		}
+	}
+	
+	
 	public void pacmanTick() {
-		
-	}
-	
-	public void ghostTick() {
-		
-	}
-	
-	public void tick() {
-		if (timerEnabled) {
-		currentTime += 15;
-		
-		if(pacMan.getPosition().measureDistance(blinky.getPosition()) < 20)
-		{
-			timerEnabled = false;
-		}
-		if(pacMan.getPosition().measureDistance(inky.getPosition()) < 20)
-		{
-			timerEnabled = false;
-		}
-		if(pacMan.getPosition().measureDistance(clyde.getPosition()) < 20)
-		{
-			timerEnabled = false;
-		}
-		if(pacMan.getPosition().measureDistance(pinky.getPosition()) < 20)
-		{
-			timerEnabled = false;
-		}
-		
-		if(!(currentState.equals(Ghost.GhostState.Chase) && currentStateNumber == 3))
-		{
-			if (currentState.equals(Ghost.GhostState.Scatter) && currentTime > scatterTime[level][currentStateNumber])
-			{
-				currentState = Ghost.GhostState.Chase;
-				currentTime = 0;
-				blinky.setState(Ghost.GhostState.Chase);
-				pinky.setState(Ghost.GhostState.Chase);
-				inky.setState(Ghost.GhostState.Chase);
-				clyde.setState(Ghost.GhostState.Chase);
-			}
-			else if (currentState.equals(Ghost.GhostState.Chase) && currentTime > chaseTime[level][currentStateNumber])
-			{
-				currentState = Ghost.GhostState.Scatter;
-				currentTime = 0;
-				currentStateNumber += 1;
-				blinky.setState(Ghost.GhostState.Scatter);
-				pinky.setState(Ghost.GhostState.Scatter);
-				inky.setState(Ghost.GhostState.Scatter);
-				clyde.setState(Ghost.GhostState.Scatter);
-			}
-		}
-		
-		blinky.detTarget(pacMan);
-		pinky.detTarget(pacMan);
-		inky.detTarget(pacMan, blinky);
-		clyde.detTarget(pacMan);
-		
+		pacMan.setDirection(controls.getDirectionQueue());
 		boolean pacmanInTile = false;
 		for (Tile i : tiles)
         {
@@ -268,12 +290,13 @@ public class Game extends JPanel{
 				if (i.isHasDot())
 				{
 					i.setHasDot(false);
-					addDotScore(10);
+					dotEaten();					
 				}
 				if (i.isHasBigDot())
 				{
 					i.setHasBigDot(false);
 					addDotScore(50);
+					ghostEaten = 0;
 					enterFrightened();
 				}
 				if(i.getTeleportLink() != null)
@@ -282,6 +305,18 @@ public class Game extends JPanel{
 				}
 				pacmanInTile = true;
 			}
+        }
+		if (!pacmanInTile)
+			pacMan.move(MOVE_STEPS);
+		ghostDetTarget();
+	}
+	
+	public void ghostTick() {
+
+		
+		
+		for (Tile i : tiles)
+        {
 			if (blinky.getPosition().equals(i.getPosition()))
 			{
 				blinky.setLastTile(i);
@@ -294,42 +329,249 @@ public class Game extends JPanel{
 			}
 			if (pinky.getPosition().equals(i.getPosition()))
 			{
-				pinky.setLastTile(i);
-				if(i.getTeleportLink() != null)
+				if(i.isGhostBounce() || (i.isPinkyBounce() && !pinky.getState().equals(Ghost.GhostState.ExitGhostHouse)))
 				{
-					pinky.setPosition(i.getTeleportLink().getPosition());
+					pinky.turnAround();
 				}
-				if(i.isIntersection() == true)
-					pinky.choseDirection(i);
+				else
+				{
+					pinky.setLastTile(i);
+					if(i.getTeleportLink() != null)
+					{
+						pinky.setPosition(i.getTeleportLink().getPosition());
+					}
+					if(i.isIntersection() == true)
+						pinky.choseDirection(i);
+				}
 			}
 			if (inky.getPosition().equals(i.getPosition()))
 			{
-				inky.setLastTile(i);
-				if(i.getTeleportLink() != null)
+				if(i.isGhostBounce())
 				{
-					inky.setPosition(i.getTeleportLink().getPosition());
+					inky.turnAround();
 				}
-				if(i.isIntersection() == true)
-					inky.choseDirection(i);
+				else
+				{
+					inky.setLastTile(i);
+					if(i.getTeleportLink() != null)
+					{
+						inky.setPosition(i.getTeleportLink().getPosition());
+					}
+					if(i.isIntersection() == true)
+						inky.choseDirection(i);
+				}
 			}
 			if (clyde.getPosition().equals(i.getPosition()))
 			{
-				clyde.setLastTile(i);
-				if(i.getTeleportLink() != null)
+				if(i.isGhostBounce())
 				{
-					clyde.setPosition(i.getTeleportLink().getPosition());
+					clyde.turnAround();
 				}
-				if(i.isIntersection() == true)
-					clyde.choseDirection(i);
+				else
+				{
+					clyde.setLastTile(i);
+					if(i.getTeleportLink() != null)
+					{
+						clyde.setPosition(i.getTeleportLink().getPosition());
+					}
+					if(i.isIntersection() == true)
+						clyde.choseDirection(i);
+				}
 			}
         }
-		if (!pacmanInTile)
-			pacMan.move(2);
-		blinky.move(2);
-		pinky.move(2);
-		inky.move(2);
-		clyde.move(2);
-		pacMan.setDirection(controls.getDirectionQueue());
+		
+		if (blinky.getPosition().equals(GHOSTHOUSE,0,-20) && blinky.getState().equals(Ghost.GhostState.ExitGhostHouse))
+			blinky.dropState();
+		if (inky.getPosition().equals(GHOSTHOUSE,0,-20) && inky.getState().equals(Ghost.GhostState.ExitGhostHouse))
+			inky.dropState();
+		if (pinky.getPosition().equals(GHOSTHOUSE,0,-20) && pinky.getState().equals(Ghost.GhostState.ExitGhostHouse))
+			pinky.dropState();
+		if (clyde.getPosition().equals(GHOSTHOUSE,0,-20) && clyde.getState().equals(Ghost.GhostState.ExitGhostHouse))
+			clyde.dropState();
+		
+		if (blinky.getPosition().equals(PINKY_GHOSTHOUSE) && blinky.getState().equals(Ghost.GhostState.Eaten))
+			blinky.setState(Ghost.GhostState.ExitGhostHouse);
+		if (inky.getPosition().equals(INKY_GHOSTHOUSE) && inky.getState().equals(Ghost.GhostState.Eaten))
+			inky.setState(Ghost.GhostState.ExitGhostHouse);
+		if (pinky.getPosition().equals(PINKY_GHOSTHOUSE) && pinky.getState().equals(Ghost.GhostState.Eaten))
+			pinky.setState(Ghost.GhostState.ExitGhostHouse);
+		if (clyde.getPosition().equals(CLYDE_GHOSTHOUSE) && clyde.getState().equals(Ghost.GhostState.Eaten))
+			clyde.setState(Ghost.GhostState.ExitGhostHouse);
+		
+		ghostDetTarget();
+		
+		blinky.move(MOVE_STEPS);
+		pinky.move(MOVE_STEPS);
+		inky.move(MOVE_STEPS);
+		clyde.move(MOVE_STEPS);
+		
+	}
+	
+	public void checkGhostState() {
+		if(!(currentState.equals(Ghost.GhostState.Chase) && currentStateNumber == 3))
+		{
+			if (currentState.equals(Ghost.GhostState.Scatter) && currentTime > SCATTER_TIME[level-1][currentStateNumber])
+			{
+				currentState = Ghost.GhostState.Chase;
+				currentTime = 0;
+				blinky.setState(Ghost.GhostState.Chase);
+				pinky.setState(Ghost.GhostState.Chase);
+				inky.setState(Ghost.GhostState.Chase);
+				clyde.setState(Ghost.GhostState.Chase);
+			}
+			else if (currentState.equals(Ghost.GhostState.Chase) && currentTime > CHASE_TIME[level-1][currentStateNumber])
+			{
+				currentState = Ghost.GhostState.Scatter;
+				currentTime = 0;
+				currentStateNumber += 1;
+				blinky.setState(Ghost.GhostState.Scatter);
+				pinky.setState(Ghost.GhostState.Scatter);
+				inky.setState(Ghost.GhostState.Scatter);
+				clyde.setState(Ghost.GhostState.Scatter);
+			}
+		}
+	}
+	
+	public void respawn() {
+		pacMan = new PacMan(280,640);
+		blinky = new Blinky();
+		pinky = new Pinky();
+		clyde = new Clyde();
+		inky = new Inky();
+		blinky.setState(Ghost.GhostState.Scatter);
+		pinky.setState(Ghost.GhostState.Scatter);
+		inky.setState(Ghost.GhostState.Scatter);
+		clyde.setState(Ghost.GhostState.Scatter);
+		currentTime = 0;
+		currentStateNumber = 0;
+		ghostEaten = 0;
+	}
+	
+	
+	
+	public void pacmanDie() {
+		life -= 1;
+		
+		timerEnabled = false;
+		
+		
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		if (life == 0)
+		{
+			GameEnd gamened = new GameEnd(score);
+			stopTimer();
+			f.dispose();
+		}
+		else
+		{
+			respawn();
+		}
+		timerEnabled = true;
+		System.out.println("dead");
+	}
+	
+	public void collision(PacMan p, Ghost g) {
+		if(g.getState().equals(Ghost.GhostState.Frightened))
+		{
+			ghostDeathPosition.setPosition(g.getPosition());
+			score += GHOST_EAT_SCORE[ghostEaten];
+			ghostEaten++;
+			frozenFor = 50;
+			timerFrozen = true;
+			timerEnabled = false;
+			ghostDied = true;
+			g.setState(Ghost.GhostState.Eaten);
+		}
+		else if(!g.getState().equals(Ghost.GhostState.Eaten))
+		{
+			pacmanDie();
+		}
+	}
+	
+	public boolean checkCollison() {
+		if(pacMan.getPosition().measureDistance(blinky.getPosition()) < 20)
+		{
+			//timerEnabled = false;
+			collision(pacMan, blinky);
+			return true;
+		}
+		if(pacMan.getPosition().measureDistance(inky.getPosition()) < 20)
+		{
+			//timerEnabled = false;
+			collision(pacMan, inky);
+			return true;
+		}
+		if(pacMan.getPosition().measureDistance(clyde.getPosition()) < 20)
+		{
+			//timerEnabled = false;
+			collision(pacMan, clyde);
+			return true;
+		}
+		if(pacMan.getPosition().measureDistance(pinky.getPosition()) < 20)
+		{
+			//timerEnabled = false;
+			collision(pacMan, pinky);
+			return true;
+		}
+		return false;
+	}
+
+	
+	public void ghostDetTarget() {
+		blinky.detTarget(pacMan);
+		pinky.detTarget(pacMan);
+		inky.detTarget(pacMan, blinky);
+		clyde.detTarget(pacMan);
+	}
+	
+	public void timePassed(int i) {
+		blinky.timePassed(i);
+		inky.timePassed(i);
+		pinky.timePassed(i);
+		clyde.timePassed(i);
+	}
+	
+	public void tick() {
+		if(timerFrozen)
+		{
+			frozenFor -= 1;
+			if(frozenFor == 0)
+			{
+				timerFrozen = false;
+				ghostDied = false;
+				timerEnabled = true;
+			}
+		}
+		
+		if (timerEnabled) {
+		currentTime += TIMER_MS;
+		currentPacmanTime += 1;
+		currentGhostTime += 1;
+		if (currentPacmanTime == pacmanTime)
+		{
+			pacmanTick();
+			currentPacmanTime = 0;
+			if(checkCollison())
+				return;
+			
+			
+		}
+		if (currentGhostTime == ghostTime)
+		{
+			ghostTick();
+			currentGhostTime = 0;
+			if(checkCollison())
+				return;
+		}
+		
+		timePassed(TIMER_MS);
+		checkGhostState();
+
 		repaint();
 		}
 	}
@@ -361,7 +603,6 @@ public class Game extends JPanel{
         Image pacManTexture_up = new ImageIcon("C:\\Users\\Dell\\Downloads\\up.gif").getImage();
         Image pacManTexture_right = new ImageIcon("C:\\Users\\Dell\\Downloads\\right.gif").getImage();
         Image pacManTexture_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\left.gif").getImage();
-        Image ghost_texture = new ImageIcon("C:\\Users\\Dell\\Downloads\\ghost.gif").getImage();
         Image b_up = new ImageIcon("C:\\Users\\Dell\\Downloads\\b_up.gif").getImage();
         Image b_down = new ImageIcon("C:\\Users\\Dell\\Downloads\\b_down.gif").getImage();
         Image b_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\b_left.gif").getImage();
@@ -380,6 +621,12 @@ public class Game extends JPanel{
         Image p_right = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_right.gif").getImage();
         Image frightened = new ImageIcon("C:\\Users\\Dell\\Downloads\\f.gif").getImage();
         Image frightenedend = new ImageIcon("C:\\Users\\Dell\\Downloads\\fe.gif").getImage();
+        Image e_up = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Up.png").getImage();
+        Image e_down = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Down.png").getImage();
+        Image e_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Left.png").getImage();
+        Image e_right = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Right.png").getImage();
+        
+        
         if(pacMan.getDirection().equals(Game.Direction.Down))
         	g2d.drawImage(pacManTexture_down, pacMan.getPosition().getX(), pacMan.getPosition().getY(), null);
         if(pacMan.getDirection().equals(Game.Direction.Up))
@@ -392,6 +639,17 @@ public class Game extends JPanel{
         
         if(blinky.getState().equals(Ghost.GhostState.Frightened))
         	g2d.drawImage(frightened, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        else if(blinky.getState().equals(Ghost.GhostState.Eaten))
+        {
+        	if(blinky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(e_down, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(e_up, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(e_left, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        	if(blinky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(e_right, blinky.getPosition().getX(), blinky.getPosition().getY(), null);
+        }
         else 
         {
         	if(blinky.getDirection().equals(Game.Direction.Down))
@@ -406,6 +664,17 @@ public class Game extends JPanel{
         
         if(clyde.getState().equals(Ghost.GhostState.Frightened))
         	g2d.drawImage(frightened, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        else if(clyde.getState().equals(Ghost.GhostState.Eaten))
+        {
+        	if(clyde.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(e_down, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(e_up, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(e_left, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        	if(clyde.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(e_right, clyde.getPosition().getX(), clyde.getPosition().getY(), null);
+        }
         else
         {
         	if(clyde.getDirection().equals(Game.Direction.Down))
@@ -420,6 +689,17 @@ public class Game extends JPanel{
         
         if(inky.getState().equals(Ghost.GhostState.Frightened))
         	g2d.drawImage(frightened, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        else if(inky.getState().equals(Ghost.GhostState.Eaten))
+        {
+        	if(inky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(e_down, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(e_up, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(e_left, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        	if(inky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(e_right, inky.getPosition().getX(), inky.getPosition().getY(), null);
+        }
         else
         {
         	if(inky.getDirection().equals(Game.Direction.Down))
@@ -434,6 +714,17 @@ public class Game extends JPanel{
         
         if(pinky.getState().equals(Ghost.GhostState.Frightened))
         	g2d.drawImage(frightened, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        else if(pinky.getState().equals(Ghost.GhostState.Eaten))
+        {
+        	if(pinky.getDirection().equals(Game.Direction.Down))
+        		g2d.drawImage(e_down, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Up))
+        		g2d.drawImage(e_up, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Left))
+        		g2d.drawImage(e_left, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        	if(pinky.getDirection().equals(Game.Direction.Right))
+        		g2d.drawImage(e_right, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        }
         else
         {
         	if(pinky.getDirection().equals(Game.Direction.Down))
@@ -444,6 +735,11 @@ public class Game extends JPanel{
         		g2d.drawImage(p_left, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
         	if(pinky.getDirection().equals(Game.Direction.Right))
         		g2d.drawImage(p_right, pinky.getPosition().getX(), pinky.getPosition().getY(), null);
+        }
+        for (int i = 0; i < life; i++)
+        {
+    		g2d.setPaint(Color.yellow);
+    		g2d.fillOval(i*20, 700, 16, 16);
         }
 
         /*
@@ -456,6 +752,26 @@ public class Game extends JPanel{
 		g2d.setPaint(Color.orange);
 		g2d.fillOval(clyde.getTarget().getX()+10, clyde.getTarget().getY()+10, 7, 7);
         */
+        /*
+        for(Tile i : tiles)
+        {
+        	g2d.setPaint(Color.yellow);
+    		g2d.fillOval(i.getPosition().getX(), i.getPosition().getY(), 16, 16);
+        }
+        */
+        g2d.setPaint(Color.white);
+        g2d.setFont(new Font("Arial",Font.BOLD,20));
+        g2d.drawString("SCORE: " + score, 0, 20);
+        g2d.drawString("HIGH SCORE: " + highScore, 0, 50);
+        g2d.drawString("LEVEL: " + level, 0, 698);
+        
+        if(ghostDied)
+        {
+        	g2d.setPaint(Color.yellow);
+        	g2d.setFont(new Font("Arial",Font.BOLD,15));
+            g2d.drawString("" + GHOST_EAT_SCORE[ghostEaten], ghostDeathPosition.getX()-5, ghostDeathPosition.getY()+20);
+        }
+        
         g2d.dispose();
     }
 	
