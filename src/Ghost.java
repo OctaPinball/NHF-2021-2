@@ -43,10 +43,52 @@ public class Ghost extends Entity implements Constant{
 	}
 	
 	public void dropState() {
+		System.out.println("drop");
 		state = stateMemory;
 	}
 	
 	public void setState(GhostState s) {
+		
+		if(state.equals(GhostState.Eaten) && (s.equals(GhostState.Scatter) || s.equals(GhostState.Chase)))
+		{
+			stateMemory = s;
+			return;
+		}
+		if(state.equals(GhostState.Eaten) && (s.equals(GhostState.Frightened)))
+		{
+			return;
+		}
+		
+		
+		if(s.equals(GhostState.ExitGhostHouse))
+		{
+			state = s;
+			return;
+		}
+		
+		
+		if (s.equals(GhostState.Frightened) && !(state.equals(GhostState.ExitGhostHouse) || state.equals(GhostState.InGhostHouse)))
+		{
+			if(!state.equals(GhostState.Frightened))
+			{
+				turnAround();
+				stateMemory = state;
+			}
+			frightenedTimeLeft = FRIGHTENED_TIME;
+			state = s;
+			return;
+		}
+		if((state.equals(GhostState.ExitGhostHouse) || state.equals(GhostState.InGhostHouse)) && !s.equals(GhostState.Frightened))
+		{
+			stateMemory = s;
+			return;
+		}
+		
+		state = s;
+		
+		
+		/*
+		
 		if (s.equals(GhostState.ExitGhostHouse) && (state.equals(GhostState.InGhostHouse) || state.equals(GhostState.Eaten)))
 		{
 				state = s;
@@ -81,6 +123,8 @@ public class Ghost extends Entity implements Constant{
 			return;
 		}
 		state = s;
+		*/
+		
 		turnAround();
 	}
 	public void choseDirection(Tile f) {

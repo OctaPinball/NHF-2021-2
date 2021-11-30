@@ -22,6 +22,8 @@ public class Position {
 		return "X= " + x + "  Y= " + y;
 	}
 	public double measureDistance(Position p) {
+		if(p == null)
+			return 0;
 		return (Math.sqrt(Math.pow(x-p.getX(), 2) + Math.pow(y-p.getY(), 2)));
 	}
 	public void setPosition(Position p) {

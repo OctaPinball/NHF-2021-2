@@ -4,13 +4,11 @@ public class Pinky extends Ghost{
 
 	public Pinky() {
 		super(PINKY_GHOSTHOUSE.getX(), PINKY_GHOSTHOUSE.getY());
-		System.out.println("create");
 		setState(GhostState.ExitGhostHouse);
 		direction = Game.Direction.Up;
 		housePosition = PINKY_GHOSTHOUSE;
 	}
 	public void detTarget(PacMan p) {
-		System.out.println("use");
 		if(getState().equals(GhostState.InGhostHouse) || getState().equals(GhostState.Eaten))
 			target = getHousePosition();
 		if(getState().equals(GhostState.ExitGhostHouse))

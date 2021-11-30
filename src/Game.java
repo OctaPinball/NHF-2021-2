@@ -57,10 +57,10 @@ public class Game extends JPanel implements Constant{
 	private Position ghostDeathPosition = new Position(0,0);
 	private boolean ghostDied = false;
 	private int frozenFor = 0;
-	private int ghostTime = 1;
-	private int currentGhostTime = 0;
-	private int pacmanTime = 1;
-	private int currentPacmanTime = 0;
+	//private int ghostTime = 1;
+	//private int currentGhostTime = 0;
+	//private int pacmanTime = 1;
+	//private int currentPacmanTime = 0;
 	
 	private MainFrame f;
 	
@@ -319,17 +319,24 @@ public class Game extends JPanel implements Constant{
         {
 			if (blinky.getPosition().equals(i.getPosition()))
 			{
-				blinky.setLastTile(i);
-				if(i.getTeleportLink() != null)
+				if(i.isGhostBounce() || (i.isPinkyBounce() && !(blinky.getState().equals(Ghost.GhostState.ExitGhostHouse) || blinky.getState().equals(Ghost.GhostState.Eaten))))
 				{
-					blinky.setPosition(i.getTeleportLink().getPosition());
+					blinky.turnAround();
 				}
-				if(i.isIntersection() == true)
-					blinky.choseDirection(i);
+				else
+				{
+					blinky.setLastTile(i);
+					if(i.getTeleportLink() != null)
+					{
+						blinky.setPosition(i.getTeleportLink().getPosition());
+					}
+					if(i.isIntersection() == true)
+						blinky.choseDirection(i);
+				}
 			}
 			if (pinky.getPosition().equals(i.getPosition()))
 			{
-				if(i.isGhostBounce() || (i.isPinkyBounce() && !pinky.getState().equals(Ghost.GhostState.ExitGhostHouse)))
+				if(i.isGhostBounce() || (i.isPinkyBounce() && !(pinky.getState().equals(Ghost.GhostState.ExitGhostHouse) || pinky.getState().equals(Ghost.GhostState.Eaten))))
 				{
 					pinky.turnAround();
 				}
@@ -390,11 +397,17 @@ public class Game extends JPanel implements Constant{
 			clyde.dropState();
 		
 		if (blinky.getPosition().equals(PINKY_GHOSTHOUSE) && blinky.getState().equals(Ghost.GhostState.Eaten))
+		{
+			System.out.println("out");
 			blinky.setState(Ghost.GhostState.ExitGhostHouse);
+		}
 		if (inky.getPosition().equals(INKY_GHOSTHOUSE) && inky.getState().equals(Ghost.GhostState.Eaten))
 			inky.setState(Ghost.GhostState.ExitGhostHouse);
 		if (pinky.getPosition().equals(PINKY_GHOSTHOUSE) && pinky.getState().equals(Ghost.GhostState.Eaten))
+		{
+			System.out.println("out");
 			pinky.setState(Ghost.GhostState.ExitGhostHouse);
+		}
 		if (clyde.getPosition().equals(CLYDE_GHOSTHOUSE) && clyde.getState().equals(Ghost.GhostState.Eaten))
 			clyde.setState(Ghost.GhostState.ExitGhostHouse);
 		
@@ -481,39 +494,40 @@ public class Game extends JPanel implements Constant{
 		{
 			ghostDeathPosition.setPosition(g.getPosition());
 			score += GHOST_EAT_SCORE[ghostEaten];
+			g.setState(Ghost.GhostState.Eaten);
 			ghostEaten++;
 			frozenFor = 50;
 			timerFrozen = true;
 			timerEnabled = false;
 			ghostDied = true;
-			g.setState(Ghost.GhostState.Eaten);
+			repaint();
 		}
-		else if(!g.getState().equals(Ghost.GhostState.Eaten))
+		else
 		{
 			pacmanDie();
 		}
 	}
 	
 	public boolean checkCollison() {
-		if(pacMan.getPosition().measureDistance(blinky.getPosition()) < 20)
+		if(pacMan.getPosition().measureDistance(blinky.getPosition()) < 20 && (!blinky.getState().equals(Ghost.GhostState.Eaten)))
 		{
 			//timerEnabled = false;
 			collision(pacMan, blinky);
 			return true;
 		}
-		if(pacMan.getPosition().measureDistance(inky.getPosition()) < 20)
+		if(pacMan.getPosition().measureDistance(inky.getPosition()) < 20 && (!inky.getState().equals(Ghost.GhostState.Eaten)))
 		{
 			//timerEnabled = false;
 			collision(pacMan, inky);
 			return true;
 		}
-		if(pacMan.getPosition().measureDistance(clyde.getPosition()) < 20)
+		if(pacMan.getPosition().measureDistance(clyde.getPosition()) < 20 && (!clyde.getState().equals(Ghost.GhostState.Eaten)))
 		{
 			//timerEnabled = false;
 			collision(pacMan, clyde);
 			return true;
 		}
-		if(pacMan.getPosition().measureDistance(pinky.getPosition()) < 20)
+		if(pacMan.getPosition().measureDistance(pinky.getPosition()) < 20 && (!pinky.getState().equals(Ghost.GhostState.Eaten)))
 		{
 			//timerEnabled = false;
 			collision(pacMan, pinky);
@@ -551,24 +565,24 @@ public class Game extends JPanel implements Constant{
 		
 		if (timerEnabled) {
 		currentTime += TIMER_MS;
-		currentPacmanTime += 1;
-		currentGhostTime += 1;
-		if (currentPacmanTime == pacmanTime)
-		{
+		//currentPacmanTime += 1;
+		//currentGhostTime += 1;
+		//if (currentPacmanTime == pacmanTime)
+		//{
 			pacmanTick();
-			currentPacmanTime = 0;
+			//currentPacmanTime = 0;
 			if(checkCollison())
 				return;
 			
 			
-		}
-		if (currentGhostTime == ghostTime)
-		{
+		//}
+		//if (currentGhostTime == ghostTime)
+		//{
 			ghostTick();
-			currentGhostTime = 0;
+			//currentGhostTime = 0;
 			if(checkCollison())
 				return;
-		}
+		//}
 		
 		timePassed(TIMER_MS);
 		checkGhostState();
@@ -770,7 +784,7 @@ public class Game extends JPanel implements Constant{
         {
         	g2d.setPaint(Color.yellow);
         	g2d.setFont(new Font("Arial",Font.BOLD,15));
-            g2d.drawString("" + GHOST_EAT_SCORE[ghostEaten], ghostDeathPosition.getX()-5, ghostDeathPosition.getY()+20);
+            g2d.drawString("" + GHOST_EAT_SCORE[ghostEaten - 1], ghostDeathPosition.getX()-5, ghostDeathPosition.getY()+20);
         }
         
         g2d.dispose();

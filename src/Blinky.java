@@ -6,6 +6,7 @@ public class Blinky extends Ghost{
 		super(BLINKY_GHOSTHOUSE.getX(), BLINKY_GHOSTHOUSE.getY());
 		setState(GhostState.Scatter);
 		direction = Game.Direction.Right;
+		housePosition = PINKY_GHOSTHOUSE;
 	}
 	public void detTarget(PacMan p) {
 		if(getState().equals(GhostState.InGhostHouse) || getState().equals(GhostState.Eaten))
