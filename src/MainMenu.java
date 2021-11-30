@@ -3,10 +3,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 
 
 
@@ -28,7 +26,7 @@ public class MainMenu {
 		}
 	}
 
-	private static final long serialVersionUID = 1L;
+
 	public JFrame f = new JFrame("PacMan");
 	private JPanel p = new JPanel();
 	private JButton b_start_game = new JButton("START GAME");

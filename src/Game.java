@@ -5,22 +5,22 @@ import java.awt.Graphics2D;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
+
 
 import javax.swing.Timer;
 
 import javax.swing.ImageIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import java.awt.Color;
 
 public class Game extends JPanel implements Constant{
 	
+
+	private static final long serialVersionUID = 1L;
+
+
 	enum Direction {
 		  Up,
 		  Down,
@@ -449,6 +449,7 @@ public class Game extends JPanel implements Constant{
 	
 	
 	
+	@SuppressWarnings("unused")
 	public void pacmanDie() {
 		life -= 1;
 		
@@ -620,7 +621,7 @@ public class Game extends JPanel implements Constant{
         Image p_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_left.gif").getImage();
         Image p_right = new ImageIcon("C:\\Users\\Dell\\Downloads\\p_right.gif").getImage();
         Image frightened = new ImageIcon("C:\\Users\\Dell\\Downloads\\f.gif").getImage();
-        Image frightenedend = new ImageIcon("C:\\Users\\Dell\\Downloads\\fe.gif").getImage();
+        //Image frightenedend = new ImageIcon("C:\\Users\\Dell\\Downloads\\fe.gif").getImage();
         Image e_up = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Up.png").getImage();
         Image e_down = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Down.png").getImage();
         Image e_left = new ImageIcon("C:\\Users\\Dell\\Downloads\\e_Left.png").getImage();

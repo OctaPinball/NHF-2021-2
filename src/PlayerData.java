@@ -8,7 +8,8 @@ import javax.swing.table.AbstractTableModel;
 public class PlayerData extends AbstractTableModel{
 
 
-    List<Player> players = new ArrayList<>();
+	private static final long serialVersionUID = 1L;
+	List<Player> players = new ArrayList<>();
 
 	@Override
 	public int getRowCount() {
@@ -47,7 +48,6 @@ public class PlayerData extends AbstractTableModel{
 	@Override
 	public Class<?> getColumnClass(int i)
 	{
-		Player s=players.get(0);
 		switch(i)
 		{
 			case 0: return String.class;

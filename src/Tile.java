@@ -1,12 +1,9 @@
-import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.swing.*;
 
 public class Tile {
 	private Position position;
-	private boolean turnPoint;
 	private boolean hasDot;
 	private boolean hasBigDot;
 	private boolean cantGoUp;
@@ -16,7 +13,7 @@ public class Tile {
 	private boolean pinkyBounce;
 	Tile teleportLink;
 
-	private Image dotImage;
+
 	private Map<Game.Direction, Tile> next;
 	
 	

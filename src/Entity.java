@@ -1,13 +1,10 @@
-import java.awt.*;
-import javax.swing.*;
 
 
 public class Entity {
 	protected Position position;
 	protected Game.Direction direction = Game.Direction.Left;
 	protected Tile lastTile = null;
-	private double speed;
-	private Image texture;
+	//private Image texture;
 	
 	public Position getPosition() {
 		return position;
